@@ -1,0 +1,46 @@
+# script to reformat output from EP_Toolkit
+# output file needs to be saved as "BeginTime_EndTimems.txt"
+
+if (Sys.info()[['sysname']] == 'Windows') {
+  path = "C:/Users/xif20/Dropbox/Thesis/2a_EmbodiedLanguage/Data"
+} else {
+  path = "~/Dropbox/Thesis/2a_EmbodiedLanguage/Data"
+}
+setwd(path)
+getwd()
+
+library(reshape2)
+library(sjstats)
+
+tmp <- t(read.table("82_122ms.txt",skip = 5, header = FALSE,fill = TRUE))
+colnames(tmp) <- tmp[nrow(tmp),]
+rawdata <- tmp[-nrow(tmp),]
+colnames(rawdata)[1] <- 'Condition'
+colnames(rawdata)[2] <- 'Cluster'
+write.csv(rawdata,"rawdata.csv")
+rawdata <- read.csv("rawdata.csv")
+rownames(rawdata) <- NULL
+
+rawdata_long <- melt(rawdata[,-1],id.vars = c("Condition","Cluster"), variable.name = "Subject", value.name = "Amplitude")
+
+# bilateral: C3, C4, F3, F4, P3, P4, O1, O2
+# midline: Fz, Cz, Pz
+rawdata_long$Hemisphere <- substr(rawdata_long$Cluster,2,2) # get 1,2,3,4,z
+rawdata_long$Anteriority <- substr(rawdata_long$Cluster,1,1) # get F,C,P,O
+rawdata_long$Hemisphere <- gsub("1","L",rawdata_long$Hemisphere,fixed=TRUE)
+rawdata_long$Hemisphere <- gsub("3","L",rawdata_long$Hemisphere,fixed=TRUE)
+rawdata_long$Hemisphere <- gsub("5","L",rawdata_long$Hemisphere,fixed=TRUE)
+rawdata_long$Hemisphere <- gsub("7","L",rawdata_long$Hemisphere,fixed=TRUE)
+rawdata_long$Hemisphere <- gsub("2","R",rawdata_long$Hemisphere,fixed=TRUE)
+rawdata_long$Hemisphere <- gsub("4","R",rawdata_long$Hemisphere,fixed=TRUE)
+rawdata_long$Hemisphere <- gsub("6","R",rawdata_long$Hemisphere,fixed=TRUE)
+rawdata_long$Hemisphere <- gsub("8","R",rawdata_long$Hemisphere,fixed=TRUE)
+rawdata_long$Hemisphere <- gsub("z","M",rawdata_long$Hemisphere,fixed=TRUE)
+
+## define two variables
+rawdata_long$Category <- ifelse(rawdata_long$Condition == "NovelAction" | rawdata_long$Condition == "RealAction","Action","Visual")
+rawdata_long$Lexicality <- ifelse(rawdata_long$Condition == "NovelAction" | rawdata_long$Condition == "NovelVisual","Novel","Real")
+rawdata_long$Category <- as.factor(rawdata_long$Category)
+rawdata_long$Lexicality <- as.factor(rawdata_long$Lexicality)
+rawdata_long$Hemisphere <- as.factor(rawdata_long$Hemisphere)
+rawdata_long$Anteriority <- as.factor(rawdata_long$Anteriority)
