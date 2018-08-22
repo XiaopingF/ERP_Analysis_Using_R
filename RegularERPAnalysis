@@ -1,0 +1,102 @@
+# codes below are for ANOVA: two clusters of intereste, lateral clusters, midline clusters
+# to run mixed effects modeling, simply load lme4 package and change the formular to mixed effects modeling
+
+# to run repeated-measure ANOVA on lateral clusters
+rawdata_long.lateral <- subset(rawdata_long,rawdata_long$Hemisphere != "M")
+model.lateral <- aov(Amplitude~(Anteriority*Lexicality*Hemisphere)+Error(Subject/(Anteriority*Lexicality*Hemisphere)),rawdata_long.lateral)
+summary(model.lateral)
+plot(Amplitude~Lexicality,data=rawdata_long.lateral)
+tapply(rawdata_long.lateral$Amplitude,rawdata_long.lateral$Lexicality,mean)
+
+# lateral sites and novel words
+rawdata_long.lateral.novel <- subset(rawdata_long,rawdata_long$Hemisphere != "M" & rawdata_long$Lexicality == "Novel")
+model.lateral.novel <- aov(Amplitude~(Category*Anteriority*Hemisphere)+Error(Subject/(Category*Anteriority*Hemisphere)),rawdata_long.lateral.novel)
+summary(model.lateral.novel)
+
+# lateral sites and existing words
+rawdata_long.lateral.real <- subset(rawdata_long,rawdata_long$Hemisphere != "M" & rawdata_long$Lexicality == "Real")
+model.lateral.real <- aov(Amplitude~(Category*Anteriority*Hemisphere)+Error(Subject/(Category*Anteriority*Hemisphere)),rawdata_long.lateral.real)
+summary(model.lateral.real)
+
+# to run repeated-measure ANOVA on midline clusters
+rawdata_long.midline <- subset(rawdata_long,rawdata_long$Hemisphere == "M")
+model.midline <- aov(Amplitude~(Lexicality*Anteriority)+Error(Subject/(Lexicality*Anteriority)),rawdata_long.midline)
+summary(model.midline)
+
+# midline sites and novel words
+rawdata_long.midline <- subset(rawdata_long,rawdata_long$Hemisphere == "M" & rawdata_long$Lexicality == "Novel")
+model.midline.novel <- aov(Amplitude~(Category*Anteriority)+Error(Subject/(Category*Anteriority)),rawdata_long.midline)
+summary(model.midline.novel)
+
+# midline sites and real words
+rawdata_long.midline <- subset(rawdata_long,rawdata_long$Hemisphere == "M" & rawdata_long$Lexicality == "Real")
+model.midline.real <- aov(Amplitude~(Category*Anteriority)+Error(Subject/(Category*Anteriority)),rawdata_long.midline)
+summary(model.midline.real)
+
+# ROI analysis: central (C3/C4, or C3/z/4); occipital (O1/2)
+
+# to run repeated-measure ANOVA on central clusters (C3, Cz, and C4)
+rawdata_long.one <- subset(rawdata_long,rawdata_long$Anteriority == "C")
+model.one <- aov(Amplitude~(Category*Lexicality)+Error(Subject/(Category*Lexicality)),rawdata_long.one)
+summary(model.one)
+
+# to examine effect in one or multiple particular cluster(s)
+rawdata_long.cluster <- subset(rawdata_long,rawdata_long$Anteriority == "O")
+model.cluster <- aov(Amplitude~(Category*Lexicality + Error(Subject/(Category*Lexicality))),rawdata_long.cluster)
+summary(model.cluster)
+
+# to examine effect in one cluster (C3 and C4)
+rawdata_long.roi1 <- subset(rawdata_long,rawdata_long$Anteriority == "C" & rawdata_long$Hemisphere != "M")
+model.roi1 <- aov(Amplitude~(Category*Lexicality + Error(Subject/(Category*Lexicality))),rawdata_long.roi1)
+summary(model.roi1)
+
+# run analysis on novel words and real words separately
+# to run repeated-measure ANOVA on central clusters (C3, Cz, and C4) on novel words only
+rawdata_long.one <- subset(rawdata_long,rawdata_long$Anteriority == "C" & rawdata_long$Lexicality == "Novel")
+model.one <- aov(Amplitude~(Category)+Error(Subject/(Category)),rawdata_long.one)
+summary(model.one)
+
+# to examine effect in one or multiple particular cluster(s) on novel words only
+rawdata_long.cluster <- subset(rawdata_long,rawdata_long$Anteriority == "O" & rawdata_long$Lexicality == "Novel")
+model.cluster <- aov(Amplitude~(Category + Error(Subject/(Category))),rawdata_long.cluster)
+summary(model.cluster)
+
+# to examine effect in one cluster (C3 and C4) on novel words only
+rawdata_long.roi1 <- subset(rawdata_long,rawdata_long$Anteriority == "C" & rawdata_long$Hemisphere != "M"  & rawdata_long$Lexicality == "Novel")
+model.roi1 <- aov(Amplitude~(Category + Error(Subject/(Category))),rawdata_long.roi1)
+summary(model.roi1)
+
+# to run repeated-measure ANOVA on central clusters (C3, Cz, and C4) on real words only
+rawdata_long.one <- subset(rawdata_long,rawdata_long$Anteriority == "C" & rawdata_long$Lexicality == "Real")
+model.one <- aov(Amplitude~(Category)+Error(Subject/(Category)),rawdata_long.one)
+summary(model.one)
+
+# to examine effect in one or multiple particular cluster(s) on real words only
+rawdata_long.cluster <- subset(rawdata_long,rawdata_long$Anteriority == "O" & rawdata_long$Lexicality == "Real")
+model.cluster <- aov(Amplitude~(Category + Error(Subject/(Category))),rawdata_long.cluster)
+summary(model.cluster)
+
+# to examine effect in one cluster (C3 and C4) on real words only
+rawdata_long.roi1 <- subset(rawdata_long,rawdata_long$Anteriority == "C" & rawdata_long$Hemisphere != "M"  & rawdata_long$Lexicality == "Real")
+model.roi1 <- aov(Amplitude~(Category + Error(Subject/(Category))),rawdata_long.roi1)
+summary(model.roi1)
+
+# to run repeated-measure ANOVA on central clusters (C3, Cz, and C4) to examine lexicality effect 
+rawdata_long.one <- subset(rawdata_long,rawdata_long$Anteriority == "C")
+model.one <- aov(Amplitude~(Lexicality)+Error(Subject/(Lexicality)),rawdata_long.one)
+summary(model.one)
+
+# to examine effect in one or multiple particular cluster(s) to examine lexicality effect
+rawdata_long.cluster <- subset(rawdata_long,rawdata_long$Anteriority == "O")
+model.cluster <- aov(Amplitude~(Lexicality + Error(Subject/(Lexicality))),rawdata_long.cluster)
+summary(model.cluster)
+
+# to examine effect in one cluster (C3 and C4) to examine lexicality effect
+rawdata_long.roi1 <- subset(rawdata_long,rawdata_long$Anteriority == "C" & rawdata_long$Hemisphere != "M" )
+model.roi1 <- aov(Amplitude~(Lexicality + Error(Subject/(Lexicality))),rawdata_long.roi1)
+summary(model.roi1)
+
+# to exaime effect in one cluster
+rawdata_long.roi1 <- subset(rawdata_long,rawdata_long$Anteriority == "F" & rawdata_long$Hemisphere == "M"  & rawdata_long$Lexicality == "Real")
+model.roi1 <- aov(Amplitude~(Category + Error(Subject/(Category))),rawdata_long.roi1)
+summary(model.roi1)
