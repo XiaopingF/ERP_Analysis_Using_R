@@ -1,0 +1,115 @@
+# script to run permutation test (downsample data to 100HZ (average over 10 ms))
+
+if (Sys.info()[['sysname']] == 'Windows') {
+  path = "C:/Users/xif20/Dropbox/Thesis/2a_EmbodiedLanguage/Data"
+} else {
+  path = "~/Dropbox/Thesis/2a_EmbodiedLanguage/Data"
+}
+setwd(path)
+getwd()
+
+library(coin) # for permutation test
+
+#define Subject and condition info.
+ConditionName = c("NovelAction","NovelVisual","RealAction","RealVisual");
+SubjectID = c("1001","1003","1004","1005","1006",
+              "1007", "1008","1009","1010","1011",
+              "1013","1014","1016","1017","1018",
+              "1019","1020","1021","1022","1023",
+              "1024","1025","1026","1027","1030",
+              "1031");
+#define clusters
+Cz = c(7,31,55,80,106,129)
+Fz = c(4,	5,	10,	11,	12,	16,	18,	19)
+Pz = c(61,	62,	67,	72,	77,	78)
+O1 = c(65,	66,	69,	70,	71,	74)	
+C3 = c(29,	30,	35,	36,	37,	41,	42)
+F3 = c(20,	23,	24,	27,	28)		
+P3 = c(47,	51,	52,	53,	59,	60)	
+O2 = c(76,	82,	83,	84,	89,	90)	
+C4 = c(87,	93,	103,	104,	105,	110,	111)
+F4 = c(3,	117,	118,	123,	124)		
+P4 = c(85,	86,	91,	92,	97,	98)	
+
+
+# change file names to "SubjectID_ConditionName.txt": DONE!
+for (i in 1:length(SubjectID)){
+  for (j in 1:length(ConditionName)){
+    OldFileName = paste0("WordLearning_10_SeparateAve_WordLearning_",
+                         SubjectID[i],"_",ConditionName[j],".txt")
+    NewFileName = paste0(SubjectID[i],"_",ConditionName[j],".txt")
+    file.rename(OldFileName, NewFileName)
+  }
+}
+
+## extract values for particular cluster and particular time window
+BeginTime <- seq(1, 900, by=10)
+EndTime <- seq(10,900,by = 10)
+Cluster <- c(P3,Pz)
+ClusterName = "Pz"
+
+for (j in 1:length(ConditionName)){
+  ClusterData <- NULL
+  for (i in 1:length(SubjectID)){
+    FileName <- paste0(SubjectID[i],"_",ConditionName[j],".txt")
+    tmp <- t(read.table(FileName)) # honrizaontal: 1-900 time points
+    ClusterMean <- apply(tmp[Cluster,],2,mean) # average across electrodes for each time points
+    ClusterData <- rbind(ClusterData, ClusterMean)
+  }
+  row.names(ClusterData) <- SubjectID
+  assign(paste("Data",ConditionName[j], sep = "_"), as.data.frame(ClusterData))
+  write.csv(ClusterData,paste0("Data_",ConditionName[j],"_",ClusterName,".csv"))
+}
+
+# to get downsampled data: from 1000 HZ to 100 HZ; Do once for each cluster
+for (j in 1:length(ConditionName)){
+  tmp <- read.csv(paste0("Data_",ConditionName[j],"_",ClusterName,".csv"))
+  tmp_allpoint <- NULL
+  for (k in 1:length(BeginTime)){
+    tmp_onepoint <- apply(tmp[,BeginTime[k]:EndTime[k]],1,mean)
+    tmp_allpoint <- rbind(tmp_allpoint,tmp_onepoint)
+  }
+  tmp_allpoint <- t(tmp_allpoint)
+  colnames(tmp_allpoint) <- as.character(BeginTime)
+  row.names(tmp_allpoint) <- SubjectID
+  assign(paste("Data",ConditionName[j],"DS", sep = "_"), as.data.frame(tmp_allpoint)) # DS for downsample
+  write.csv(tmp_allpoint,paste0("Data_",ConditionName[j],"_",ClusterName,"_DS.csv"))
+}
+
+# run permutation test for each time step: here novel action words vs. novel visual words
+Zvalue <- NULL
+Pvalue <- NULL
+WordType = "RealWords" # either "NovelWords" or "RealWords"
+
+if (WordType == "NovelWords"){
+  ActionData <- Data_NovelAction_DS
+  VisualData <- Data_NovelVisual_DS
+} else {
+  ActionData <- Data_RealAction_DS
+  VisualData <- Data_RealVisual_DS
+  }
+
+for (k in 1:length(BeginTime)){
+  Action = ActionData[,k]
+  Visual = VisualData[,k]
+  contrast <- data.frame(
+    Amplitude =c(Action,Visual),
+    Condition =gl(2,length(Action),labels = c("Action","Visual")),
+    Subject = factor(rep(seq_along(Action),2))
+    )
+TestResults <- symmetry_test(Amplitude ~ Condition | Subject, data = contrast, paired = TRUE,
+                distribution = "approximate")
+
+# save seed, z value, p value
+Zvalue[k] <- statistic(TestResults)[[1]]
+Pvalue[k] <- pvalue(TestResults)[[1]]
+}
+
+write.csv(Zvalue,paste0("Zvalue_",ClusterName,"_",WordType,".csv"))
+write.csv(Pvalue,paste0("Pvalue_",ClusterName,"_",WordType,".csv"))
+
+plot(Pvalue)
+abline(a = 0.05,b=0)
+jpeg(paste0("Pvalue_",ClusterName,"_",WordType,".jpg"))
+plot(Zvalue)
+jpeg(paste0("Zvalue_",ClusterName,"_",WordType,".jpg"))
